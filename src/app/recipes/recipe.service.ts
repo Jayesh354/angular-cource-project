@@ -20,8 +20,11 @@ export class RecipeService{
               new Ingredient('Cabbage',1)])
   ];
 
-  getRecipe(){
+  getRecipes(){
     return this.recipes.slice();
+  }
+  getRecipe(index:number){
+    return this.recipes[index];
   }
   addIngredients(ingredients:Ingredient[]){
     this.shoppingListService.addIngredients(ingredients);
