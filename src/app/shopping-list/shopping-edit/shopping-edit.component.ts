@@ -1,4 +1,6 @@
-import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { Ingredient } from 'src/app/shared/ingredient.model';
 import { ShoppingListService } from '../shopping-list.service';
 
@@ -9,23 +11,47 @@ import { ShoppingListService } from '../shopping-list.service';
 })
 export class ShoppingEditComponent implements OnInit {
 
-  @ViewChild('nameInput') nameInputRef!: ElementRef;
-  @ViewChild('amountInput') amountInputRef!:ElementRef;
-
-  @Output() ingredientAdded=new EventEmitter<Ingredient>();
+  subscription!:Subscription;
+  editMode=false;
+  editedIngredient!:Ingredient;
+  editIndex!:number;
+  @ViewChild('f') slForm!:NgForm;
 
   constructor(private shoppingListService:ShoppingListService) { }
 
   ngOnInit(): void {
+    this.subscription=this.shoppingListService.ingredientEditStarted.subscribe(
+      (index:number)=>{
+        this.editMode=true
+        this.editIndex=index;
+        this.editedIngredient=this.shoppingListService.getIngredient(index);
+        this.slForm.setValue({
+          name:this.editedIngredient.name,
+          amount:this.editedIngredient.amount
+        })
+
+      }
+      )
   }
-  OnAdded(){
-
-    const ingName=this.nameInputRef.nativeElement.value;
-    const ingAmt=this.amountInputRef.nativeElement.value;
-
-    const newIngredient=new Ingredient(ingName,ingAmt);
+  onSubmited(form:NgForm){
+    const value=form.value;
+    const newIngredient=new Ingredient(value.name,value.amount);
+    if(this.editMode){
+      this.shoppingListService.updateIngredient(this.editIndex,newIngredient);
+    }
+    else{
     this.shoppingListService.addIngredient(newIngredient);
-
+    }
+    this.editMode=false;
+    form.reset();
+  }
+  onClear(){
+    this.editMode=false;
+    this.slForm.reset();
+  }
+  onDelete(){
+    this.shoppingListService.deleteIngredient(this.editIndex);
+    this.onClear()
   }
 
 }
